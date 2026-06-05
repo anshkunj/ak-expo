@@ -5,13 +5,13 @@ on:
     branches: ['main']
 
 jobs:
-  build_android:
-    type: build
+  update:
+    type: update
     params:
-      platform: android
-      profile: preview
-  # update:
-  #   type: update
+      branch: preview
+      message: "Auto update from commit"
+  # build_android:
+  #   type: build
   #   params:
-  #     branch: preview
-  #     message: "Auto update from commit"
+  #     platform: android
+  #     profile: preview

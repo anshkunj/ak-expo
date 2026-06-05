@@ -10,3 +10,8 @@ jobs:
     params:
       platform: android
       profile: preview
+  # update:
+  #   type: update
+  #   params:
+  #     branch: preview
+  #     message: "Auto update from commit"

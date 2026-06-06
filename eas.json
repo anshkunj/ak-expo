@@ -21,5 +21,12 @@
   },
   "submit": {
     "production": {}
+  },
+  "deploy": {
+    "preview": {
+      "export": {
+        "platform": "web"
+      }
+    }
   }
 }

@@ -10,18 +10,6 @@
     },
     "preview": {
       "channel": "preview",
-{
-  "cli": {
-    "version": ">= 18.11.0",
-    "appVersionSource": "remote"
-  },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
-      "channel": "preview",
       "distribution": "internal",
       "android": {
         "buildType": "apk"

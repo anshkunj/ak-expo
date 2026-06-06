@@ -10,10 +10,6 @@ jobs:
     params:
       branch: preview
       message: "Auto update from commit"
-  deploy:
-    type: deploy
-    params:
-      profile: preview
   # build_android:
   #   type: build
   #   params:

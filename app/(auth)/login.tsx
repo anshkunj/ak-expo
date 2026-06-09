@@ -2,12 +2,11 @@ import {View, Text, Pressable, TextInput, Alert} from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import {router} from 'expo-router';
-import {getSupabase} from '../../lib/supabase';
+import {supabase} from '../../lib/supabase';
 
 export default function LoginPage() {
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
-  const supabase = getSupabase();
   const handleLogin = async () => {
     const {data:{user},error} = await supabase.auth.signInWithPassword({
       email,

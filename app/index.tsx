@@ -12,13 +12,13 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
-import { getSupabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
 
 export default function Home() {
   const [expenses, setExpenses] = useState([]);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
-  const supabase = getSupabase();
+
   useEffect(() => {
     const check = async () => {
       const {data:{user},error} = await supabase.auth.getUser();

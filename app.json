@@ -4,7 +4,8 @@
     "slug": "my-app",
     "version": "1.0.0",
     "updates": {
-      "url": "https://u.expo.dev/2c4ddf14-54e5-45e0-843a-3efedbcf26b9"
+      "url": "https://u.expo.dev/2c4ddf14-54e5-45e0-843a-3efedbcf26b9",
+      "channel": "preview"
     },
     "runtimeVersion": {
       "policy": "appVersion"

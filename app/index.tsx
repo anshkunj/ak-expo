@@ -8,6 +8,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
@@ -16,9 +17,32 @@ import { supabase } from "../lib/supabase";
 export default function Home() {
   const [expenses, setExpenses] = useState([]);
   const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const check = async () => {
+      const {data:{user},error} = await supabase.auth.getUser();
+      if (!user) {
+        router.replace("/(auth)/login")
+      }
+      if (error) {
+        console.log(JSON.stringify(user,null,2));
+      }
+      fetchData();
+    };
+    check();
+  },[]);
 
+  async function handleLogout() {
+    const {error} = await supabase.auth.signOut();
+    if (error) {
+      console.log(error);
+      return;
+    }
+    router.teplace("/(auth)/login")
+  }
   async function fetchData() {
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from("expenses")
       .select()
       .order("id", { ascending: false });
@@ -26,15 +50,12 @@ export default function Home() {
     setExpenses(data || []);
   }
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   async function createExpense() {
     if (!content.trim()) return;
-
+    const {data:{user}} = await supabase.auth.getUser();
     await supabase.from("expenses").insert({
       content,
+      user_id: user.id,
     });
 
     setContent("");
@@ -70,13 +91,18 @@ export default function Home() {
 
   const Header = () => (
     <View className="mb-8">
-      <Text className="text-white text-4xl font-bold">
-        Expense Tracker
-      </Text>
-
-      <Text className="text-zinc-400 mt-2">
-        Track every rupee you spend
-      </Text>
+      <View className="flex-row justify-between">
+        <Text className="text-white text-3xl font-bold">
+          Expense Tracker
+        </Text>
+        <Pressable onPress={handleLogout} className="rounded bg-white p-2 active:scale-95">
+          <Text classNane="text-white font-semibold">Logout</Text>
+        </Pressable>
+      </View>
+  
+        <Text className="text-zinc-400 mt-2">
+          Track every rupee you spend
+        </Text>
     </View>
   );
 
@@ -172,9 +198,9 @@ export default function Home() {
         <View
           className="
             absolute
-            bottom-0
             left-0
             right-0
+            bottom-0
             bg-zinc-950
             border-t
             border-zinc-800
@@ -201,7 +227,7 @@ export default function Home() {
             <Pressable
               onPress={createExpense}
               className="
-                bg-green-600
+                bg-[#666]
                 px-6
                 py-4
                 rounded-full

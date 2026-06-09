@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,90 +21,150 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const check = async () => {
-      const {data:{user},error} = await supabase.auth.getUser();
-      if (!user) {
-        router.replace("/(auth)/login")
+    const initialize = async () => {
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (error) {
+          console.log(error);
+          return;
+        }
+
+        if (!user) {
+          router.replace("/(auth)/login");
+          return;
+        }
+
+        await fetchData();
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
       }
-      if (error) {
-        console.log(JSON.stringify(user,null,2));
-      }
-      fetchData();
     };
-    check();
-  },[]);
+
+    initialize();
+  }, []);
+
+  async function fetchData() {
+    try {
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .order("id", { ascending: false });
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      setExpenses(data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   async function handleLogout() {
-    const {error} = await supabase.auth.signOut();
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      router.replace("/(auth)/login");
+    } catch (error) {
       console.log(error);
-      return;
     }
-    router.teplace("/(auth)/login")
-  }
-  async function fetchData() {
-
-    const { data, error } = await supabase
-      .from("expenses")
-      .select()
-      .order("id", { ascending: false });
-
-    setExpenses(data || []);
   }
 
   async function createExpense() {
-    if (!content.trim()) return;
-    const {data:{user}} = await supabase.auth.getUser();
-    await supabase.from("expenses").insert({
-      content,
-      user_id: user.id,
-    });
+    try {
+      if (!content.trim()) return;
 
-    setContent("");
-    fetchData();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        console.log(userError);
+        return;
+      }
+
+      const { error } = await supabase.from("expenses").insert({
+        content: content.trim(),
+        user_id: user.id,
+      });
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      setContent("");
+      await fetchData();
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   function confirmDelete(id) {
-    Alert.alert(
-      "Delete Expense",
-      "Are you sure?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => deleteExpense(id),
-        },
-      ]
-    );
+    Alert.alert("Delete Expense", "Are you sure?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => deleteExpense(id),
+      },
+    ]);
   }
 
   async function deleteExpense(id) {
-    await supabase
-      .from("expenses")
-      .delete()
-      .eq("id", id);
-  
-    fetchData();
+    try {
+      const { error } = await supabase
+        .from("expenses")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      await fetchData();
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   const Header = () => (
     <View className="mb-8">
-      <View className="flex-row justify-between">
+      <View className="flex-row justify-between items-center">
         <Text className="text-white text-3xl font-bold">
           Expense Tracker
         </Text>
-        <Pressable onPress={handleLogout} className="rounded bg-white p-2 active:scale-95">
-          <Text classNane="text-white font-semibold">Logout</Text>
+
+        <Pressable
+          onPress={handleLogout}
+          className="bg-white px-4 py-2 rounded-xl active:opacity-70"
+        >
+          <Text className="text-black font-semibold">
+            Logout
+          </Text>
         </Pressable>
       </View>
-  
-        <Text className="text-zinc-400 mt-2">
-          Track every rupee you spend
-        </Text>
+
+      <Text className="text-zinc-400 mt-2">
+        Track every rupee you spend
+      </Text>
     </View>
   );
 
@@ -121,15 +182,23 @@ export default function Home() {
     </View>
   );
 
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-black items-center justify-center">
+        <ActivityIndicator size="large" color="#22c55e" />
+
+        <Text className="text-zinc-400 mt-4">
+          Loading expenses...
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-black">
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={
-          Platform.OS === "ios"
-            ? "padding"
-            : "height"
-        }
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <FlatList
           data={expenses}
@@ -141,9 +210,11 @@ export default function Home() {
             padding: 20,
             paddingBottom: 140,
           }}
-          columnWrapperStyle={{
-            justifyContent: "space-between",
-          }}
+          columnWrapperStyle={
+            expenses.length > 1
+              ? { justifyContent: "space-between" }
+              : undefined
+          }
           ListHeaderComponent={<Header />}
           ListEmptyComponent={<EmptyState />}
           renderItem={({ item }) => (
@@ -168,7 +239,7 @@ export default function Home() {
                 >
                   #{item.id}
                 </Text>
-          
+
                 <Pressable
                   hitSlop={10}
                   onPress={() => confirmDelete(item.id)}
@@ -180,7 +251,7 @@ export default function Home() {
                   />
                 </Pressable>
               </View>
-            
+
               <Text
                 className="
                   text-white
@@ -193,8 +264,6 @@ export default function Home() {
             </View>
           )}
         />
-
-        {/* Bottom Input Bar */}
 
         <View
           className="
@@ -215,6 +284,8 @@ export default function Home() {
               onChangeText={setContent}
               placeholder="Add expense..."
               placeholderTextColor="#666"
+              returnKeyType="done"
+              onSubmitEditing={createExpense}
               className="
                 flex-1
                 bg-zinc-900
@@ -228,10 +299,11 @@ export default function Home() {
             <Pressable
               onPress={createExpense}
               className="
-                bg-[#666]
+                bg-green-600
                 px-6
                 py-4
                 rounded-full
+                active:opacity-80
               "
             >
               <Text className="text-white font-bold">

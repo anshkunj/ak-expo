@@ -17,7 +17,7 @@ import { supabase } from "../lib/supabase";
 
 export default function Home() {
   const [expenses, setExpenses] = useState([]);
-  const [content, setContent] = useState("");
+  const [expense, setExpense] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function Home() {
 
   async function createExpense() {
     try {
-      if (!content.trim()) return;
+      if (!expense.trim()) return;
 
       const {
         data: { user },
@@ -96,7 +96,7 @@ export default function Home() {
       }
 
       const { error } = await supabase.from("expenses").insert({
-        content: content.trim(),
+        expense: expense.trim(),
         user_id: user.id,
       });
 
@@ -105,7 +105,7 @@ export default function Home() {
         return;
       }
 
-      setContent("");
+      setExpense("");
       await fetchData();
     } catch (error) {
       console.log(error);
@@ -258,7 +258,7 @@ export default function Home() {
                   mt-3
                 "
               >
-                {item.content}
+                {item.expense}
               </Text>
             </View>
           )}
@@ -279,8 +279,8 @@ export default function Home() {
         >
           <View className="flex-row items-center gap-3">
             <TextInput
-              value={content}
-              onChangeText={setContent}
+              value={expense}
+              onChangeText={setExpense}
               placeholder="Add expense..."
               placeholderTextColor="#666"
               returnKeyType="done"

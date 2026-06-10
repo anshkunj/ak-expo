@@ -100,12 +100,12 @@ export default function LoginPage() {
           }}
         >
           <View className="mb-12">
-            <Text className="text-white text-5xl font-extrabold">
+            <Text className="text-white text-4xl font-extrabold">
               Expense Tracker
             </Text>
 
             <Text className="text-zinc-400 mt-3 text-base">
-              Track every rupee you spend.
+              Track every rupee you spend
             </Text>
           </View>
 
@@ -185,7 +185,7 @@ export default function LoginPage() {
           </View>
 
           <Text className="text-zinc-500 text-center mt-8">
-            Manage expenses simply and efficiently.
+            Manage expenses simply and efficiently
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

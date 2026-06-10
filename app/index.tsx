@@ -19,6 +19,7 @@ export default function Home() {
   const [expenses, setExpenses] = useState([]);
   const [expense, setExpense] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const initialize = async () => {
@@ -50,6 +51,7 @@ export default function Home() {
 
   async function fetchData() {
     try {
+      setRefreshing(true);
       const { data, error } = await supabase
         .from("expenses")
         .select("*")
@@ -59,7 +61,7 @@ export default function Home() {
         console.log(error);
         return;
       }
-
+      setRefreshing(false);
       setExpenses(data || []);
     } catch (error) {
       console.log(error);
@@ -201,6 +203,8 @@ export default function Home() {
       >
         <FlatList
           data={expenses}
+          refreshing={refreshing}
+          onRefresh={fetchData}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
           keyboardShouldPersistTaps="handled"

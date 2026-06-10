@@ -224,16 +224,12 @@ export default function Home() {
           ListHeaderComponent={<Header />}
           ListEmptyComponent={<EmptyState />}
           renderItem={({ item }) => (
-            <View
-              className="
-                bg-zinc-900
-                rounded-3xl
-                p-5
-                mb-4
-                w-[48%]
-                border
-                border-zinc-800
-              "
+            <Pressable
+              style={({ pressed }) => ({
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+                opacity: pressed ? 0.7 : 1,
+              })}
+              className="bg-zinc-900 rounded-3xl p-5 mb-4 w-[48%] border border-zinc-800"
             >
               <View className="flex-row justify-between items-start">
                 <Text
@@ -267,7 +263,7 @@ export default function Home() {
               >
                 {item.expense}
               </Text>
-            </View>
+            </Pressable>
           )}
         />
 

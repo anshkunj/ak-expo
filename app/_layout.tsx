@@ -1,13 +1,8 @@
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import '../global.css';
 import { Stack } from "expo-router";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 export default function Layout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <Stack />
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+    <Stack screenOptions={{headerShown:false}}/>
   );
 }

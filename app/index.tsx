@@ -32,32 +32,28 @@ export default function Home() {
           data: { user },
           error,
         } = await supabase.auth.getUser();
-
-        if (error) {
-          console.log(error);
-        }
-
-        if (!user) {
+    
+        if (error || !user) {
           router.replace("/(auth)/login");
           return;
         }
 
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("username")
+          .select("username, avatar_url")
           .eq("id", user.id)
           .single();
-        
-        if (!profile?.username) {
-          router.replace("/choose-username");
+    
+        if (profileError) {
+          console.log(profileError);
         }
 
-        const {data:{avatar_url},err} = await supabase
-          .from("profiles")
-          .select("avatar_url")
-          .single();
+        if (!profile?.username) {
+          router.replace("/choose-username");
+          return;
+        }
 
-        setAvatar(avatar_url);
+        setAvatar(profile?.avatar_url || "");
 
         await fetchData();
       } catch (error) {
@@ -165,11 +161,11 @@ export default function Home() {
 
         <Pressable
           onPress={goToProfile}
-          className="bg-white px-4 py-2 rounded-xl active:opacity-70"
+          className="bg-white rounded-full active:opacity-70"
         >
           <Image
-            source={{uri:avatar || "https://placehold.co/200x200/png"}} size={25}
-            className="rounded-full border-2 border-zinc-700"
+            source={{ uri: avatar || "https://placehold.co/200x200/png" }}
+            className="w-14 h-14 rounded-full border-2 border-zinc-700"
           />
         </Pressable>
       </View>

@@ -84,6 +84,9 @@ export default function ChooseUsernamePage() {
         <Text className="text-zinc-400 mt-3 text-base">
           Pick a unique username for your account.
         </Text>
+        <Text className="text-zinc-400 text-base">
+          This can NOT be changed after once created
+        </Text>
 
         <TextInput
           value={username}

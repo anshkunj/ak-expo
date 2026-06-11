@@ -88,12 +88,12 @@ export default function Home() {
       content: {
         title: "Test Notification 🔔",
         body: "This is working now",
+        sound: true,
       },
-      trigger: {
-        seconds: 1, // 1 second baad trigger hoga
-      },
+      trigger: null, 
     });
   };
+
 
   return (
     <View className="flex-1 bg-black justify-center items-center gap-6 p-4">

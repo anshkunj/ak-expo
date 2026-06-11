@@ -1,8 +1,17 @@
 import { View, Text, Button, Image, Alert } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
+
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function Home() {
   const [image, setImage] = useState(null);
@@ -21,8 +30,7 @@ export default function Home() {
 
   // 📸 IMAGE PICKER
   const pickImage = async () => {
-    const permission =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
       Alert.alert("Permission denied for gallery");
@@ -30,7 +38,7 @@ export default function Home() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, // 👈 Note: SDK 54 me default images hi hota hai, yeh sahi hai
       allowsEditing: true,
       quality: 1,
     });
@@ -42,8 +50,7 @@ export default function Home() {
 
   // 📍 LOCATION
   const getLocation = async () => {
-    const { status } =
-      await Location.requestForegroundPermissionsAsync();
+    const { status } = await Location.requestForegroundPermissionsAsync();
   
     if (status !== "granted") {
       Alert.alert("Location permission denied");
@@ -83,7 +90,7 @@ export default function Home() {
         body: "This is working now",
       },
       trigger: {
-        seconds: 1,
+        seconds: 1, // 1 second baad trigger hoga
       },
     });
   };

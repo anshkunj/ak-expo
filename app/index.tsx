@@ -10,10 +10,10 @@ import {
   ActivityIndicator,
   Modal,
   TouchableWithoutFeedback,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -23,6 +23,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [avatar, setAvatar] = useState("");
 
   useEffect(() => {
     const initialize = async () => {
@@ -40,6 +41,23 @@ export default function Home() {
           router.replace("/(auth)/login");
           return;
         }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", user.id)
+          .single();
+        
+        if (!profile?.username) {
+          router.replace("/choose-username");
+        }
+
+        const {data:{avatar_url},err} = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .single();
+
+        setAvatar(avatar_url);
 
         await fetchData();
       } catch (error) {
@@ -71,19 +89,8 @@ export default function Home() {
     }
   }
 
-  async function handleLogout() {
-    try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        console.log(error);
-        return;
-      }
-
-      router.replace("/(auth)/login");
-    } catch (error) {
-      console.log(error);
-    }
+  function goToProfile() {
+    router.push("/profile");
   }
 
   async function createExpense() {
@@ -157,12 +164,13 @@ export default function Home() {
         </Text>
 
         <Pressable
-          onPress={handleLogout}
+          onPress={goToProfile}
           className="bg-white px-4 py-2 rounded-xl active:opacity-70"
         >
-          <Text className="text-black font-semibold">
-            Logout
-          </Text>
+          <Image
+            source={{uri:avatar || "https://placehold.co/200x200/png"}} size={25}
+            className="rounded-full border-2 border-zinc-700"
+          />
         </Pressable>
       </View>
 
@@ -188,18 +196,18 @@ export default function Home() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-black items-center justify-center">
+      <View className="flex-1 bg-black items-center justify-center">
         <ActivityIndicator size="large" color="#22c55e" />
 
         <Text className="text-zinc-400 mt-4">
           Loading expenses...
         </Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <View className="flex-1 bg-black">
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -319,6 +327,6 @@ export default function Home() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

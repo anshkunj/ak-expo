@@ -8,6 +8,17 @@ export default function Home() {
   const [image, setImage] = useState(null);
   const [location, setLocation] = useState(null);
 
+  useEffect(() => {
+    async function setup() {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+      });
+    }
+  
+    setup();
+  }, []);
+
   // 📸 IMAGE PICKER
   const pickImage = async () => {
     const permission =
@@ -59,20 +70,21 @@ export default function Home() {
 
   // 🔔 NOTIFICATIONS
   const sendNotification = async () => {
-    const { status } =
-      await Notifications.requestPermissionsAsync();
-
+    const { status } = await Notifications.requestPermissionsAsync();
+  
     if (status !== "granted") {
-      Alert.alert("Notification permission denied");
+      Alert.alert("Permission denied");
       return;
     }
-
+  
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "Test Notification 🔔",
-        body: "Everything is working fine!",
+        body: "This is working now",
       },
-      trigger: null,
+      trigger: {
+        seconds: 1,
+      },
     });
   };
 

@@ -14,8 +14,9 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Home() {
   const [expenses, setExpenses] = useState([]);
@@ -25,47 +26,51 @@ export default function Home() {
   const [visible, setVisible] = useState(false);
   const [avatar, setAvatar] = useState("");
 
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-    
-        if (error || !user) {
-          router.replace("/(auth)/login");
-          return;
-        }
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("username, avatar_url")
-          .eq("id", user.id)
-          .single();
-    
-        if (profileError) {
-          console.log(profileError);
-        }
-
-        if (!profile?.username) {
-          router.replace("/choose-username");
-          return;
-        }
-
-        setAvatar(profile?.avatar_url || "");
-
-        await fetchData();
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
+  const fetchUserProfile = async () => {
+    try {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+  
+      if (error || !user) {
+        router.replace("/(auth)/login");
+        return;
       }
-    };
 
-    initialize();
-  }, []);
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", user.id)
+        .single();
+  
+      if (profileError) {
+        console.log(profileError);
+      }
 
+      if (!profile?.username) {
+        router.replace("/choose-username");
+        return;
+      }
+
+      setAvatar(profile?.avatar_url || "");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserProfile();
+    },[])
+  );
+
+  useEffect(() => {
+    fetchData();
+  },[])
+  
   async function fetchData() {
     try {
       setRefreshing(true);

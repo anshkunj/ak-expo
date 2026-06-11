@@ -1,324 +1,122 @@
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  Modal,
-  TouchableWithoutFeedback,
-} from "react-native";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { View, Text, Button, Image, Alert } from "react-native";
+import { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 
 export default function Home() {
-  const [expenses, setExpenses] = useState([]);
-  const [expense, setExpense] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [image, setImage] = useState(null);
+  const [location, setLocation] = useState(null);
 
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
+  // 📸 IMAGE PICKER
+  const pickImage = async () => {
+    const permission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        if (error) {
-          console.log(error);
-        }
-
-        if (!user) {
-          router.replace("/(auth)/login");
-          return;
-        }
-
-        await fetchData();
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initialize();
-  }, []);
-
-  async function fetchData() {
-    try {
-      setRefreshing(true);
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("*")
-        .order("id", { ascending: false });
-
-      if (error) {
-        console.log(error);
-        return;
-      }
-      setRefreshing(false);
-      setExpenses(data || []);
-    } catch (error) {
-      console.log(error);
+    if (!permission.granted) {
+      Alert.alert("Permission denied for gallery");
+      return;
     }
-  }
 
-  async function handleLogout() {
-    try {
-      const { error } = await supabase.auth.signOut();
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
 
-      if (error) {
-        console.log(error);
-        return;
-      }
-
-      router.replace("/(auth)/login");
-    } catch (error) {
-      console.log(error);
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
     }
-  }
+  };
 
-  async function createExpense() {
+  // 📍 LOCATION
+  const getLocation = async () => {
+    const { status } =
+      await Location.requestForegroundPermissionsAsync();
+  
+    if (status !== "granted") {
+      Alert.alert("Location permission denied");
+      return;
+    }
+  
     try {
-      if (!expense.trim()) return;
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.log(userError);
-        return;
-      }
-
-      const { error } = await supabase.from("expenses").insert({
-        expense: expense.trim(),
-        user_id: user.id,
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
       });
-
-      if (error) {
-        console.log(error);
-        return;
-      }
-
-      setExpense("");
-      await fetchData();
+  
+      console.log("LOCATION:", loc);
+  
+      setLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        accuracy: loc.coords.accuracy,
+      });
     } catch (error) {
-      console.log(error);
+      console.log("Location error:", error);
+      Alert.alert("Failed to fetch location");
     }
-  }
+  };
 
-  function confirmDelete(id) {
-    Alert.alert("Delete Expense", "Are you sure?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteExpense(id),
-      },
-    ]);
-  }
+  // 🔔 NOTIFICATIONS
+  const sendNotification = async () => {
+    const { status } =
+      await Notifications.requestPermissionsAsync();
 
-  async function deleteExpense(id) {
-    try {
-      const { error } = await supabase
-        .from("expenses")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.log(error);
-        return;
-      }
-
-      await fetchData();
-    } catch (error) {
-      console.log(error);
+    if (status !== "granted") {
+      Alert.alert("Notification permission denied");
+      return;
     }
-  }
 
-  const Header = () => (
-    <View className="mb-8">
-      <View className="flex-row justify-between items-center">
-        <Text className="text-white text-3xl font-bold">
-          Expense Tracker
-        </Text>
-
-        <Pressable
-          onPress={handleLogout}
-          className="bg-white px-4 py-2 rounded-xl active:opacity-70"
-        >
-          <Text className="text-black font-semibold">
-            Logout
-          </Text>
-        </Pressable>
-      </View>
-
-      <Text className="text-zinc-400 mt-2">
-        Track every rupee you spend
-      </Text>
-    </View>
-  );
-
-  const EmptyState = () => (
-    <View className="items-center py-20">
-      <Text className="text-6xl">💸</Text>
-
-      <Text className="text-zinc-400 mt-4 text-lg">
-        No expenses yet
-      </Text>
-
-      <Text className="text-zinc-600 mt-1">
-        Add your first expense below
-      </Text>
-    </View>
-  );
-
-  if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="#22c55e" />
-
-        <Text className="text-zinc-400 mt-4">
-          Loading expenses...
-        </Text>
-      </SafeAreaView>
-    );
-  }
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Test Notification 🔔",
+        body: "Everything is working fine!",
+      },
+      trigger: null,
+    });
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <FlatList
-          data={expenses}
-          refreshing={refreshing}
-          onRefresh={fetchData}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            padding: 20,
-            paddingBottom: 140,
-          }}
-          columnWrapperStyle={
-            expenses.length > 1
-              ? { justifyContent: "space-between" }
-              : undefined
-          }
-          ListHeaderComponent={<Header />}
-          ListEmptyComponent={<EmptyState />}
-          renderItem={({ item }) => (
-            <Pressable
-              className="
-                bg-zinc-900
-                rounded-3xl
-                p-5
-                mb-4
-                w-[48%]
-                border
-                border-zinc-800
-              "
-            >
-              <View className="flex-row justify-between items-start">
-                <Text
-                  className="
-                    text-green-500
-                    font-bold
-                    text-xs
-                  "
-                >
-                  #{item.id}
-                </Text>
+    <View className="flex-1 bg-black justify-center items-center gap-6 p-4">
 
-                <Pressable
-                  hitSlop={10}
-                  onPress={() => confirmDelete(item.id)}
-                >
-                  <Ionicons
-                    name="trash-outline"
-                    size={20}
-                    color="#ef4444"
-                  />
-                </Pressable>
-              </View>
+      <Text className="text-white text-xl font-bold">
+        Expo Feature Test Panel
+      </Text>
 
-              <Text
-                className="
-                  text-white
-                  text-base
-                  mt-3
-                "
-              >
-                {item.expense}
-              </Text>
-            </Pressable>
-          )}
+      {/* IMAGE */}
+      <Button title="Pick Image" onPress={pickImage} />
+
+      {image && (
+        <Image
+          source={{ uri: image }}
+          style={{ width: 150, height: 150, borderRadius: 10 }}
         />
+      )}
 
-        <View
-          className="
-            absolute
-            left-0
-            right-0
-            bottom-0
-            bg-zinc-950
-            border-t
-            border-zinc-800
-            px-4
-            py-4
-          "
-        >
-          <View className="flex-row items-center gap-3">
-            <TextInput
-              value={expense}
-              onChangeText={setExpense}
-              placeholder="Add expense..."
-              placeholderTextColor="#666"
-              returnKeyType="done"
-              onSubmitEditing={createExpense}
-              className="
-                flex-1
-                bg-zinc-900
-                text-white
-                px-5
-                py-4
-                rounded-full
-              "
-            />
+      {/* LOCATION */}
+      <Button title="Get Location" onPress={getLocation} />
 
-            <Pressable
-              onPress={createExpense}
-              className="
-                bg-green-600
-                px-6
-                py-4
-                rounded-full
-                active:opacity-80
-              "
-            >
-              <Text className="text-white font-bold">
-                Add
-              </Text>
-            </Pressable>
-          </View>
+      {location && (
+        <View className="bg-white p-3 rounded-lg">
+          <Text>Latitude: {location.latitude}</Text>
+          <Text>Longitude: {location.longitude}</Text>
+          <Text>Accuracy: {location.accuracy}</Text>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      )}
+
+      {location && (
+        <Text className="text-white text-center">
+          Lat: {location.latitude}
+          {"\n"}
+          Lng: {location.longitude}
+        </Text>
+      )}
+
+      {/* NOTIFICATION */}
+      <Button
+        title="Send Notification"
+        onPress={sendNotification}
+      />
+    </View>
   );
 }

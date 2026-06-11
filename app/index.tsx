@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   View,
   Text,
@@ -87,76 +88,84 @@ export default function Home() {
       setExpenses(data || []);
     } catch (error) {
       console.log(error);
-    }
-  }
+=======
+import { View, Text, Button, Image, Alert } from "react-native";
+import { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 
+export default function Home() {
+  const [image, setImage] = useState(null);
+  const [location, setLocation] = useState(null);
+
+  // 📸 IMAGE PICKER
+  const pickImage = async () => {
+    const permission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert("Permission denied for gallery");
+      return;
+>>>>>>> 9807c46
+    }
+
+<<<<<<< HEAD
   function goToProfile() {
     router.push("/profile");
   }
+=======
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
 
-  async function createExpense() {
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+>>>>>>> 9807c46
+
+  // 📍 LOCATION
+  const getLocation = async () => {
+    const { status } =
+      await Location.requestForegroundPermissionsAsync();
+  
+    if (status !== "granted") {
+      Alert.alert("Location permission denied");
+      return;
+    }
+  
     try {
-      if (!expense.trim()) return;
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.log(userError);
-        return;
-      }
-
-      const { error } = await supabase.from("expenses").insert({
-        expense: expense.trim(),
-        user_id: user.id,
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
       });
-
-      if (error) {
-        console.log(error);
-        return;
-      }
-
-      setExpense("");
-      await fetchData();
+  
+      console.log("LOCATION:", loc);
+  
+      setLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        accuracy: loc.coords.accuracy,
+      });
     } catch (error) {
-      console.log(error);
+      console.log("Location error:", error);
+      Alert.alert("Failed to fetch location");
     }
-  }
+  };
 
-  function confirmDelete(id) {
-    Alert.alert("Delete Expense", "Are you sure?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteExpense(id),
-      },
-    ]);
-  }
+  // 🔔 NOTIFICATIONS
+  const sendNotification = async () => {
+    const { status } =
+      await Notifications.requestPermissionsAsync();
 
-  async function deleteExpense(id) {
-    try {
-      const { error } = await supabase
-        .from("expenses")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.log(error);
-        return;
-      }
-
-      await fetchData();
-    } catch (error) {
-      console.log(error);
+    if (status !== "granted") {
+      Alert.alert("Notification permission denied");
+      return;
     }
-  }
 
+<<<<<<< HEAD
   const Header = () => (
     <View className="mb-8">
       <View className="flex-row justify-between items-center">
@@ -254,80 +263,62 @@ export default function Home() {
                 >
                   #{item.id}
                 </Text>
+=======
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Test Notification 🔔",
+        body: "Everything is working fine!",
+      },
+      trigger: null,
+    });
+  };
 
-                <Pressable
-                  hitSlop={10}
-                  onPress={() => confirmDelete(item.id)}
-                >
-                  <Ionicons
-                    name="trash-outline"
-                    size={20}
-                    color="#ef4444"
-                  />
-                </Pressable>
-              </View>
+  return (
+    <View className="flex-1 bg-black justify-center items-center gap-6 p-4">
+>>>>>>> 9807c46
 
-              <Text
-                className="
-                  text-white
-                  text-base
-                  mt-3
-                "
-              >
-                {item.expense}
-              </Text>
-            </Pressable>
-          )}
+      <Text className="text-white text-xl font-bold">
+        Expo Feature Test Panel
+      </Text>
+
+      {/* IMAGE */}
+      <Button title="Pick Image" onPress={pickImage} />
+
+      {image && (
+        <Image
+          source={{ uri: image }}
+          style={{ width: 150, height: 150, borderRadius: 10 }}
         />
+      )}
 
-        <View
-          className="
-            absolute
-            left-0
-            right-0
-            bottom-0
-            bg-zinc-950
-            border-t
-            border-zinc-800
-            px-4
-            py-4
-          "
-        >
-          <View className="flex-row items-center gap-3">
-            <TextInput
-              value={expense}
-              onChangeText={setExpense}
-              placeholder="Add expense..."
-              placeholderTextColor="#666"
-              returnKeyType="done"
-              onSubmitEditing={createExpense}
-              className="
-                flex-1
-                bg-zinc-900
-                text-white
-                px-5
-                py-4
-                rounded-full
-              "
-            />
+      {/* LOCATION */}
+      <Button title="Get Location" onPress={getLocation} />
 
-            <Pressable
-              onPress={createExpense}
-              className="
-                bg-green-600
-                px-6
-                py-4
-                rounded-full
-                active:opacity-80
-              "
-            >
-              <Text className="text-white font-bold">
-                Add
-              </Text>
-            </Pressable>
-          </View>
+      {location && (
+        <View className="bg-white p-3 rounded-lg">
+          <Text>Latitude: {location.latitude}</Text>
+          <Text>Longitude: {location.longitude}</Text>
+          <Text>Accuracy: {location.accuracy}</Text>
         </View>
+<<<<<<< HEAD
       </KeyboardAvoidingView>
+=======
+      )}
+
+      {location && (
+        <Text className="text-white text-center">
+          Lat: {location.latitude}
+          {"\n"}
+          Lng: {location.longitude}
+        </Text>
+      )}
+
+      {/* NOTIFICATION */}
+      <Button
+        title="Send Notification"
+        onPress={sendNotification}
+      />
+>>>>>>> 9807c46
     </View>
   );
 }
